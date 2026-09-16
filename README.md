@@ -2,7 +2,9 @@
 
 A small draft-day toolkit for redraft fantasy hockey: an interactive draft board plus notes digested from the DFO Fantasy Show's positional preview episodes and DailyFaceoff's player projections.
 
-**Live draft board:** enable GitHub Pages on this repo (Settings → Pages → Deploy from branch → `main` / `docs`) or just open [`docs/index.html`](docs/index.html) locally in a browser — no build step, no dependencies.
+**Live draft board:** https://smallfries424.github.io/fantasy-hockey-draft-prep/
+
+You can also just open [`docs/index.html`](docs/index.html) locally in a browser — no build step, no dependencies.
 
 ## What's in here
 
