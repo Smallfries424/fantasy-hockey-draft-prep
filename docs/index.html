@@ -1,0 +1,678 @@
+<!doctype html>
+<title>Puck Draft Board</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F3F8FB;
+    --surface: #FFFFFF;
+    --surface-2: #E7F0F5;
+    --border: #C9D6DE;
+    --text: #0E2233;
+    --text-muted: #52697A;
+    --accent: #1F5FA8;
+    --accent-ink: #ffffff;
+    --accent2: #D6293B;
+    --accent2-ink: #ffffff;
+    --pos-c: #A8720E;
+    --pos-lw: #5A7A1E;
+    --pos-rw: #147A57;
+    --pos-d: #5B3FA6;
+    --pos-g: #9C2E82;
+    --shadow: rgba(14, 34, 51, 0.10);
+    --taken-bg: #EEF1F3;
+    --taken-text: #8C9AA6;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0A141C;
+      --surface: #101F2B;
+      --surface-2: #16283A;
+      --border: #24384A;
+      --text: #EAF3F8;
+      --text-muted: #8FA6B6;
+      --accent: #5C9BE0;
+      --accent-ink: #06131c;
+      --accent2: #FF6577;
+      --accent2-ink: #2b0407;
+      --pos-c: #E0A73E;
+      --pos-lw: #93C158;
+      --pos-rw: #3FC79A;
+      --pos-d: #A48CEB;
+      --pos-g: #E068C0;
+      --shadow: rgba(0, 0, 0, 0.45);
+      --taken-bg: #16232D;
+      --taken-text: #56697A;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0A141C;
+    --surface: #101F2B;
+    --surface-2: #16283A;
+    --border: #24384A;
+    --text: #EAF3F8;
+    --text-muted: #8FA6B6;
+    --accent: #5C9BE0;
+    --accent-ink: #06131c;
+    --accent2: #FF6577;
+    --accent2-ink: #2b0407;
+    --pos-c: #E0A73E;
+    --pos-lw: #93C158;
+    --pos-rw: #3FC79A;
+    --pos-d: #A48CEB;
+    --pos-g: #E068C0;
+    --shadow: rgba(0, 0, 0, 0.45);
+    --taken-bg: #16232D;
+    --taken-text: #56697A;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  .display {
+    font-family: "Teko", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+
+  /* ---------- console (sticky header) ---------- */
+  .console {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  .console-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 14px 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .title-row h1 {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1;
+    color: var(--text);
+  }
+  .title-row h1 .puck { color: var(--accent); }
+  .subtitle {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  .controls-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-box {
+    flex: 1 1 200px;
+    min-width: 140px;
+    position: relative;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 8px 10px 8px 30px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .search-box input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .search-box svg {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+  .chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip-btn {
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .chip-btn[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .chip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- needs strip ---------- */
+  .needs-strip {
+    max-width: 980px;
+    margin: 12px auto 0;
+    padding: 0 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .needs-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: 2px;
+  }
+  .need-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px 4px 7px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .need-pill .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .need-pill .count { font-weight: 700; }
+  .need-pill.met { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+  .need-pill.met .count { color: var(--accent); }
+  .need-total {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .need-total b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+  /* ---------- best available strip ---------- */
+  .best-wrap { max-width: 980px; margin: 14px auto 0; padding: 0 16px; }
+  .best-wrap h2 {
+    font-family: "Teko", sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 18px;
+    margin: 0 0 6px;
+    color: var(--text-muted);
+  }
+  .best-row {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .best-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .best-card .pos-tag { align-self: flex-start; }
+  .best-card .bname {
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .best-card .bfpts {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .best-card button {
+    margin-top: 2px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 0;
+    background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .best-card button:hover { background: color-mix(in srgb, var(--accent) 26%, var(--surface)); }
+  .best-empty { font-size: 12px; color: var(--text-muted); padding: 10px 0; }
+
+  /* ---------- pos chip ---------- */
+  .pos-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .pos-C  { color: var(--pos-c);  background: color-mix(in srgb, var(--pos-c) 15%, transparent); }
+  .pos-LW { color: var(--pos-lw); background: color-mix(in srgb, var(--pos-lw) 15%, transparent); }
+  .pos-RW { color: var(--pos-rw); background: color-mix(in srgb, var(--pos-rw) 15%, transparent); }
+  .pos-D  { color: var(--pos-d);  background: color-mix(in srgb, var(--pos-d) 15%, transparent); }
+  .pos-G  { color: var(--pos-g);  background: color-mix(in srgb, var(--pos-g) 15%, transparent); }
+
+  /* ---------- list ---------- */
+  .list-wrap { max-width: 980px; margin: 14px auto 0; padding: 0 16px 90px; }
+  .result-count { font-size: 12.5px; color: var(--text-muted); margin: 0 0 8px; }
+  .rows { display: flex; flex-direction: column; gap: 6px; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 34px 1fr auto auto 72px;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .row.status-mine { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--surface)); }
+  .row.status-taken { background: var(--taken-bg); border-color: var(--border); opacity: 0.72; }
+  .row.status-taken .pname { text-decoration: line-through; text-decoration-color: var(--taken-text); }
+
+  .rank {
+    font-family: "Teko", sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .pinfo { min-width: 0; }
+  .pname-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .pname { font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pteam { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+  .pstats { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; font-variant-numeric: tabular-nums; }
+
+  .fpts-block { text-align: right; }
+  .fpts { font-family: "Teko", sans-serif; font-size: 22px; font-weight: 600; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
+  .fpts-label { font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+
+  .adp-block { text-align: right; font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .adp-block .adp-label { display: block; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .actions { display: flex; gap: 4px; justify-content: flex-end; }
+  .act-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .act-btn:hover { filter: brightness(0.97); }
+  .act-btn.mine-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .act-btn.taken-btn[aria-pressed="true"] { background: var(--accent2); border-color: var(--accent2); color: var(--accent2-ink); }
+  .act-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
+
+  /* ---------- footer bar ---------- */
+  .footer-bar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    z-index: 20;
+  }
+  .footer-inner { max-width: 980px; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .footnote { font-size: 11.5px; color: var(--text-muted); }
+  .reset-btn {
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .reset-btn.confirming { background: var(--accent2); border-color: var(--accent2); color: var(--accent2-ink); }
+
+  @media (max-width: 620px) {
+    .best-row { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .best-card:nth-child(4), .best-card:nth-child(5) { display: none; }
+  }
+
+  @media (max-width: 560px) {
+    .title-row h1 { font-size: 26px; }
+    .row {
+      grid-template-columns: 30px 1fr auto;
+      grid-template-areas:
+        "rank name fpts"
+        "actions actions actions";
+      row-gap: 6px;
+    }
+    .rank { grid-area: rank; }
+    .pinfo { grid-area: name; }
+    .fpts-block { grid-area: fpts; }
+    .adp-block { display: none; }
+    .actions { grid-area: actions; justify-content: flex-start; }
+    .act-btn { flex: 1 1 0; width: auto; }
+    .needs-strip { gap: 6px; }
+    .need-total { width: 100%; margin-left: 0; order: 99; margin-top: 2px; }
+  }
+</style>
+
+<div class="console">
+  <div class="console-inner">
+    <div class="title-row">
+      <h1 class="display"><span class="puck">&#9679;</span> Puck Draft Board</h1>
+      <p class="subtitle" id="subtitleText">Loading 298 players&hellip;</p>
+    </div>
+    <div class="controls-row">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="searchInput" type="text" placeholder="Search player or team" autocomplete="off">
+      </div>
+      <div class="chip-row" id="posChips" role="group" aria-label="Filter by position"></div>
+      <div class="chip-row" id="viewChips" role="group" aria-label="Filter by draft status"></div>
+    </div>
+  </div>
+  <div class="needs-strip" id="needsStrip"></div>
+</div>
+
+<div class="best-wrap">
+  <h2>Best available by position</h2>
+  <div class="best-row" id="bestRow"></div>
+</div>
+
+<div class="list-wrap">
+  <p class="result-count" id="resultCount"></p>
+  <div class="rows" id="rows"></div>
+</div>
+
+<div class="footer-bar">
+  <div class="footer-inner">
+    <span class="footnote">Ranked by your league's scoring, not generic ADP.</span>
+    <button class="reset-btn" id="resetBtn" type="button">Reset draft</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "puckDraftBoard_v1";
+  var TARGETS = { C: 3, LW: 3, RW: 3, D: 5, G: 2 };
+  var POS_ORDER = ["C", "LW", "RW", "D", "G"];
+  var TOTAL_SPOTS = 23;
+
+  var players = [];
+  var status = {};
+  var state = { search: "", posFilter: "ALL", view: "ALL" };
+
+  function loadStatus() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+  function saveStatus() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(status)); } catch (e) {}
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function statLine(p) {
+    if (p.isGoalie) {
+      var s = p.stats;
+      return s.w + "W " + s.l + "L &middot; " + s.svpct.toFixed(3).replace(/^0/, "") + " SV% &middot; " + s.gaa.toFixed(2) + " GAA &middot; " + s.so + " SHO";
+    }
+    var st = p.stats;
+    return st.g + "G &middot; " + st.a + "A &middot; " + st.ppp + "PPP &middot; " + st.sog + "SOG &middot; " + st.hit + "HIT &middot; " + st.blk + "BLK";
+  }
+
+  function setStatus(name, next) {
+    if (status[name] === next) {
+      delete status[name];
+    } else {
+      status[name] = next;
+    }
+    saveStatus();
+    render();
+  }
+
+  function matchesFilter(p) {
+    if (state.posFilter !== "ALL" && p.posGroup !== state.posFilter) return false;
+    if (state.search) {
+      var q = state.search.toLowerCase();
+      if (p.name.toLowerCase().indexOf(q) === -1 && p.team.toLowerCase().indexOf(q) === -1) return false;
+    }
+    var s = status[p.name];
+    if (state.view === "AVAILABLE" && s) return false;
+    if (state.view === "MINE" && s !== "mine") return false;
+    return true;
+  }
+
+  function renderChips() {
+    var posWrap = document.getElementById("posChips");
+    var opts = [["ALL", "All"]].concat(POS_ORDER.map(function (p) { return [p, p]; }));
+    posWrap.innerHTML = opts.map(function (o) {
+      var pressed = state.posFilter === o[0];
+      return '<button class="chip-btn" data-pos="' + o[0] + '" aria-pressed="' + pressed + '">' + o[1] + "</button>";
+    }).join("");
+
+    var viewWrap = document.getElementById("viewChips");
+    var vopts = [["ALL", "All"], ["AVAILABLE", "Available"], ["MINE", "My team"]];
+    viewWrap.innerHTML = vopts.map(function (o) {
+      var pressed = state.view === o[0];
+      return '<button class="chip-btn" data-view="' + o[0] + '" aria-pressed="' + pressed + '">' + o[1] + "</button>";
+    }).join("");
+  }
+
+  function renderNeeds() {
+    var mine = players.filter(function (p) { return status[p.name] === "mine"; });
+    var counts = {};
+    POS_ORDER.forEach(function (g) { counts[g] = 0; });
+    mine.forEach(function (p) { counts[p.posGroup] = (counts[p.posGroup] || 0) + 1; });
+
+    var html = '<span class="needs-label">My roster</span>';
+    POS_ORDER.forEach(function (g) {
+      var have = counts[g] || 0;
+      var need = TARGETS[g];
+      var met = have >= need;
+      html += '<span class="need-pill' + (met ? " met" : "") + '"><span class="dot pos-' + g + '" style="background:var(--pos-' + g.toLowerCase() + ')"></span>' + g + ' <span class="count tnum">' + have + "/" + need + "</span></span>";
+    });
+    html += '<span class="need-total">Roster <b class="tnum">' + mine.length + "</b> / " + TOTAL_SPOTS + "</span>";
+    document.getElementById("needsStrip").innerHTML = html;
+  }
+
+  function renderBest() {
+    var wrap = document.getElementById("bestRow");
+    var html = "";
+    POS_ORDER.forEach(function (g) {
+      var best = players.filter(function (p) { return p.posGroup === g && !status[p.name]; })
+        .sort(function (a, b) { return b.fpts - a.fpts; })[0];
+      if (!best) {
+        html += '<div class="best-card"><span class="pos-tag pos-' + g + '">' + g + '</span><p class="best-empty">None left</p></div>';
+        return;
+      }
+      html += '<div class="best-card">' +
+        '<span class="pos-tag pos-' + g + '">' + g + '</span>' +
+        '<span class="bname" title="' + escapeHtml(best.name) + '">' + escapeHtml(best.name) + '</span>' +
+        '<span class="bfpts">' + best.fpts.toFixed(1) + ' pts</span>' +
+        '<button type="button" data-mine="' + escapeHtml(best.name) + '">+ Mine</button>' +
+        '</div>';
+    });
+    wrap.innerHTML = html;
+  }
+
+  function renderRows() {
+    var filtered = players.filter(matchesFilter);
+    var container = document.getElementById("rows");
+    document.getElementById("resultCount").textContent = filtered.length + " of " + players.length + " players shown";
+
+    if (!filtered.length) {
+      container.innerHTML = '<div class="empty-state">No players match. Try clearing the search or filters.</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(function (p) {
+      var s = status[p.name];
+      var rowClass = "row" + (s === "mine" ? " status-mine" : s === "taken" ? " status-taken" : "");
+      var adp = p.adp ? p.adp.toFixed(1) : "n/a";
+      return (
+        '<div class="' + rowClass + '">' +
+          '<div class="rank tnum">' + p.newRank + '</div>' +
+          '<div class="pinfo">' +
+            '<div class="pname-row">' +
+              '<span class="pname">' + escapeHtml(p.name) + '</span>' +
+              '<span class="pteam">' + escapeHtml(p.team) + '</span>' +
+              '<span class="pos-tag pos-' + p.posGroup + '">' + p.pos + '</span>' +
+            '</div>' +
+            '<div class="pstats">' + statLine(p) + '</div>' +
+          '</div>' +
+          '<div class="fpts-block"><span class="fpts">' + p.fpts.toFixed(1) + '</span><span class="fpts-label">fantasy pts</span></div>' +
+          '<div class="adp-block"><span class="adp-label">Yahoo ADP</span>' + adp + '</div>' +
+          '<div class="actions">' +
+            '<button type="button" class="act-btn mine-btn" data-mine="' + escapeHtml(p.name) + '" aria-pressed="' + (s === "mine") + '" title="Mark as my pick">M</button>' +
+            '<button type="button" class="act-btn taken-btn" data-taken="' + escapeHtml(p.name) + '" aria-pressed="' + (s === "taken") + '" title="Mark as drafted by someone else">&times;</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+  }
+
+  function render() {
+    renderChips();
+    renderNeeds();
+    renderBest();
+    renderRows();
+  }
+
+  function boot(initialStatus) {
+    status = initialStatus || {};
+    fetch("./players.json")
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        players = data;
+        document.getElementById("subtitleText").textContent = players.length + " players &middot; your league's scoring, sorted best to worst";
+        render();
+      })
+      .catch(function () {
+        document.getElementById("subtitleText").textContent = "Could not load player data.";
+      });
+
+    document.getElementById("searchInput").addEventListener("input", function (e) {
+      state.search = e.target.value;
+      renderRows();
+    });
+
+    document.getElementById("posChips").addEventListener("click", function (e) {
+      var btn = e.target.closest("button[data-pos]");
+      if (!btn) return;
+      state.posFilter = btn.getAttribute("data-pos");
+      renderChips();
+      renderRows();
+    });
+
+    document.getElementById("viewChips").addEventListener("click", function (e) {
+      var btn = e.target.closest("button[data-view]");
+      if (!btn) return;
+      state.view = btn.getAttribute("data-view");
+      renderChips();
+      renderRows();
+    });
+
+    document.getElementById("rows").addEventListener("click", function (e) {
+      var mineBtn = e.target.closest("button[data-mine]");
+      var takenBtn = e.target.closest("button[data-taken]");
+      if (mineBtn) setStatus(mineBtn.getAttribute("data-mine"), "mine");
+      if (takenBtn) setStatus(takenBtn.getAttribute("data-taken"), "taken");
+    });
+
+    document.getElementById("bestRow").addEventListener("click", function (e) {
+      var btn = e.target.closest("button[data-mine]");
+      if (btn) setStatus(btn.getAttribute("data-mine"), "mine");
+    });
+
+    var resetBtn = document.getElementById("resetBtn");
+    var confirming = false;
+    var confirmTimer = null;
+    resetBtn.addEventListener("click", function () {
+      if (!confirming) {
+        confirming = true;
+        resetBtn.classList.add("confirming");
+        resetBtn.textContent = "Tap again to confirm";
+        confirmTimer = setTimeout(function () {
+          confirming = false;
+          resetBtn.classList.remove("confirming");
+          resetBtn.textContent = "Reset draft";
+        }, 3000);
+        return;
+      }
+      clearTimeout(confirmTimer);
+      confirming = false;
+      resetBtn.classList.remove("confirming");
+      resetBtn.textContent = "Reset draft";
+      status = {};
+      saveStatus();
+      render();
+    });
+  }
+
+  var start = function (data) { boot(loadStatus()); };
+  if (window.claude && window.claude.hot && window.claude.hot.ready) {
+    window.claude.hot.ready(start);
+  } else {
+    start();
+  }
+})();
+</script>
